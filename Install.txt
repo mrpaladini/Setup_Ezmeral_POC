@@ -1,0 +1,41 @@
+
+
+VMware Virtual Machine Sizing.
+
+Controller
+vCPU = 4
+RAM = 64
+DISK = 2 x 500GB Thin Provisioning
+
+Lab Setup
+
+DOMAIN = lab.local
+
+IP Definitions for the LAB
+
+Gateway 192.168.0.254
+Netmask 255.255.255.0
+DNS 192.168.0.254
+
+Controller IP 192.168.0.10/24 
+Gateway IP 192.168.0.11
+
+
+
+
+
+
+
+Linux Setup
+
+CentOS 7.9 
+
+
+
+Partitions
+
+/var = 150GB
+/srv = 100GB
+/opt = 150GB
+/ = all of rest space in disk
+
