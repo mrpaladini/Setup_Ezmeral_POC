@@ -1,156 +1,253 @@
 
 
-VMware Virtual Machine Sizing.
+POC Instructions
 
-Controller
-vCPU = 4
-RAM = 64
-DISK = 2 x 500GB Thin Provisioning
+This Lab is create to demonstrate the basic for HPE Ezmeral Runtime
+Ezmeral Version: 5.4
+Created by: Marcio Paladini (paladini@hpe.com)
+Guide Version: 20231111v1
+====================================================================
 
-Lab Setup
+Step-by-Step Setup
 
-DOMAIN = lab.local
+Pre requiriments to create this POC
 
-IP Definitions for the LAB
+a) Hypevisor to create all servers, in this case I used VMware vSphere 7;
+b) Internet access to download Linux updates and Ezmzeral required packages;
+c) CentOS 7 Image, I tested the image CentOS-7-x86_64-DVD-1908.iso for this LAB;
+d) All hosts need to resolv DNS by FQDN.
+    
 
-Gateway 192.168.0.254
-Netmask 255.255.255.0
-DNS 192.168.0.254
+Procedure:
 
-Controller IP 192.168.0.10/24 
-Gateway IP 192.168.0.11
+1) Create one VM with the follow setup:
+    vCPU    = 10
+    RAM     = 64
+    DISK 1  = 500GB Thin Provisioning - used for Operational System
+    DISK 2  = 500GB Thin Provisioning - used for Ephemeral Storage
 
-Linux Setup
+2) Install CentOS 7.9 Linux based at ISO named "CentOS-7-x86_64-DVD-1908.iso"
 
-CentOS 7.9 
+This linux will be used to create a VM Template for all others servers.
 
-Partitions
+    a) Network info
 
-/var = 150GB
-/srv = 100GB
-/opt = 150GB
-/ = all of rest space in disk
+    hostname    = template.lab.local
+    IP          = 192.168.0.1/24
+    Gateway     = 192.168.0.254
+    DNS         = 192.168.0.254
 
-Linux Setup
+    Note: Change the network informations as you want.
 
-# yum update
-# yum upgrade
-# echo "umask 0022" >> /etc/profile
-# sed -i 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/selinux/config
+    b) Partitions
 
-# cd /root
-# mkdir .ssh
-# ssh-keygen -b 2048 -t rsa -f /root/.ssh/id_rsa -q -N ""
-# cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys 
+    Disk 1 (sda)
 
-# mount -t nfs 192.168.0.50:labfiles /mnt
-# cp /mnt/hpe* .
+    /var = 150GB
+    /srv = 100GB
+    /opt = 150GB
+    / = all of free space in disk
 
+    Disk 2 (sdb) - keep this disk raw for while.
 
-*****************************************************************
+    c) Packages
+    
+    You need to install the follow packages during the installation:
 
-Run precheck program, and note about some issue to fix, the expeted result is like the follow sample:
+    @^infrastructure-server-environment
+    @base
+    @compat-libraries
+    @core
+    @debugging
+    @development
+    @hardware-monitoring
+    @network-file-system-client
+    @performance
+    @remote-system-management
+    @security-tools
+    @system-admin-tools
+    chrony
+    kexec-tools
 
-[root@controller ~]# ./hpe-cp-prechecks-rhel-5.4.1.bin
+    d) Update the system
 
-Pre-install checks for HPE Ezmeral Container Platform 5.4.1
-
-
-Hardware properties
-        Checking CPU count: PASSED.
-        Checking memory capacity: PASSED.
-        Checking number of disks available: PASSED.
-  Total: 3  --  Failed: 0  --  Warning: 0  --  Forced(success): 0
-
-
-
-Network port availability
-        Checking ss availability: PASSED.
-        Checking apache http access port: PASSED.
-        Checking apache http access port for epic-nagios: PASSED.
-        Checking apache https access port: PASSED.
-        Checking apache https access port for epic-nagios: PASSED.
-        Checking erlang epmd port: PASSED.
-        Checking bd_mgmt rest api port: PASSED.
-        Checking haproxy stats: PASSED.
-        Checking erlang rpc ports: PASSED.
-        Checking erlang ssh-rpc port: PASSED.
-        Checking nrpe access port: PASSED.
-        Checking nrpe access port for epic-nagios: PASSED.
-        Checking kerberos udp ports: PASSED.
-        Checking kerberos tcp ports: PASSED.
-        Checking HTTPFS ports: PASSED.
-        Checking HDFS Ports: PASSED.
-        Checking PCSD Daemon port: PASSED.
-        Checking Cluster Manager port: PASSED.
-        Checking Monitoring ports: PASSED.
-        Checking VxLAN tunnel port: PASSED.
-        Checking K8S-Calico BGP: PASSED.
-        Checking K8S-Calico Typha: PASSED.
-        Checking K8S-Kubernetes API server: PASSED.
-        Checking K8S-etcd server client API: PASSED.
-        Checking K8S-Kubelet API: PASSED.
-        Checking K8S-Kubernetes Scheduler: PASSED.
-        Checking K8S-Kubernetes Controller Manager: PASSED.
-        Checking InfoSight Aggregator: PASSED.
-        Checking EPIC VXLAN port: PASSED.
-        Checking Web UI port: PASSED.
-  Total: 30  --  Failed: 0  --  Warning: 0  --  Forced(success): 0
+    # yum update
+    # yum upgrade
 
 
-Network configuration
-        Checking primary IP address: PASSED.
-                Using ens192:192.168.0.10 as primary interface
-        Checking FQDN of the host: PASSED.
-        Checking default gateway settings: PASSED.
-        Checking Proxy setting: PASSED.
-        Checking internet access: PASSED.
-  Total: 5  --  Failed: 0  --  Warning: 0  --  Forced(success): 0
+3) Convert this VM to Template at VMware
+
+4) Create a new VM from Template with name controller and power on
+
+5) Change hostname and IP for controller VM
+
+    a) Replace Template hostname / IP / and set default parameters for Controller machine
+
+    # hostnamectl set-hostname controller.lab.local
+    # sed -i 's/IPADDR=192.168.0.1/IPADDR=192.168.0.10/g' /etc/sysconfig/network-scripts/ifcfg-ens192
+    # echo "umask 0022" >> /etc/profile
+    # echo "nameserver 192.168.0.254" >> /etc/resolv.conf
+    # sed -i 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/selinux/config
+    # reboot
+
+     
+    The follow sample you can execute by Windows machine with plink program
+    Plink is part of Putty Program that you can download at https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html 
+
+    echo "" | plink  root@192.168.0.1 -pw Ezmeral@123 ("hostnamectl set-hostname controller.lab.local")
+    echo "" | plink  root@192.168.0.1 -pw Ezmeral@123 ("sed -i 's/IPADDR=192.168.0.1/IPADDR=192.168.0.10/g' /etc/sysconfig/network-scripts/ifcfg-ens192")
+    echo "" | plink  root@192.168.0.1 -pw Ezmeral@123 ("echo "umask 0022" >> /etc/profile")
+    echo "" | plink  root@192.168.0.1 -pw Ezmeral@123 ("echo "nameserver 192.168.0.254" >> /etc/resolv.conf")
+    echo "" | plink  root@192.168.0.1 -pw Ezmeral@123 ("sed -i 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/selinux/config")
+    echo "" | plink  root@192.168.0.1 -pw Ezmeral@123 ("reboot")
+
+6) Copy Ezmeral Installations files to controller VM
+
+    You can do this with WinSCP or some NFS at your environement;
+
+    Sample of NFS
+
+    # mount -t nfs <IP of your NFS Server>:share /<folder that you want to mount>
+
+    The follow sample assume that your NFS server have IP 192.168.0.50 and your share name is labfiles that will be mounted at /mnt folder.
+
+    # mount -t nfs 192.168.0.50:labfiles /mnt
+
+7) Create a SSL Key for automatic login and run Ezmeral Prechec Setup
+
+    cd /root
+    mkdir .ssh
+    ssh-keygen -b 2048 -t rsa -f /root/.ssh/id_rsa -q -N ""
+    cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys 
+
+    /root/hpe-cp-prechecks-rhel-5.4.1.bin
+
+    The result is simular at follow 
+
+                Pre-install checks for HPE Ezmeral Container Platform 5.4.1
 
 
-Operating system configuration
-        Checking OS type: PASSED.
-        Checking OS Family: PASSED.
-        Checking running kernel version: PASSED.
-        Checking CONFIG_SECCOMP enabled in kernel: PASSED.
-        Checking compatible DOCKER version for install: PASSED.
-        Checking SELinux enforcement: PASSED.
-        Checking IPtables/Firewalld configuration: PASSED.
-        Checking automount configuration: PASSED.
-        Checking SSHD configuration: PASSED.
-        Checking rsyslog setting: PASSED.
-        Checking user and group specified: PASSED.
-        Checking dnsmasq user and group specified: PASSED.
-        Checking for krb5.keytab: PASSED.
-        Checking cgconfig kernel params: PASSED.
-        Checking compatible python version: os-tests: Checking python version for os version centos 7
-PASSED.
-        Checking Checking for presence of erlang cookie: PASSED.
-        Checking /tmp Mount Status: PASSED.
-  Total: 17  --  Failed: 0  --  Warning: 0  --  Forced(success): 0
-
-Filesystem free space checks.
-        Checking freespace on /: PASSED.
-        Checking freespace on /srv: PASSED.
-        Checking freespace on /var: PASSED.
-        Checking freespace on /opt: PASSED.
-        Checking configured swap size: PASSED.
-        Checking docker storage: PASSED.
-  Total: 6  --  Failed: 0  --  Warning: 0  --  Forced(success): 0
-
-***************************************************************************
-Aggregate tests summary:
-             Total : 61
-            Failed : 0
-           Warning : 0
-   Forced(success) : 0
-Additional information for debugging is written to /tmp/bd_prechecks.10358.log
-***************************************************************************
+                Hardware properties
+                        Checking CPU count: PASSED.
+                        Checking memory capacity: PASSED.
+                        Checking number of disks available: PASSED.
+                Total: 3  --  Failed: 0  --  Warning: 0  --  Forced(success): 0
 
 
 
+                Network port availability
+                        Checking ss availability: PASSED.
+                        Checking apache http access port: PASSED.
+                        Checking apache http access port for epic-nagios: PASSED.
+                        Checking apache https access port: PASSED.
+                        Checking apache https access port for epic-nagios: PASSED.
+                        Checking erlang epmd port: PASSED.
+                        Checking bd_mgmt rest api port: PASSED.
+                        Checking haproxy stats: PASSED.
+                        Checking erlang rpc ports: PASSED.
+                        Checking erlang ssh-rpc port: PASSED.
+                        Checking nrpe access port: PASSED.
+                        Checking nrpe access port for epic-nagios: PASSED.
+                        Checking kerberos udp ports: PASSED.
+                        Checking kerberos tcp ports: PASSED.
+                        Checking HTTPFS ports: PASSED.
+                        Checking HDFS Ports: PASSED.
+                        Checking PCSD Daemon port: PASSED.
+                        Checking Cluster Manager port: PASSED.
+                        Checking Monitoring ports: PASSED.
+                        Checking VxLAN tunnel port: PASSED.
+                        Checking K8S-Calico BGP: PASSED.
+                        Checking K8S-Calico Typha: PASSED.
+                        Checking K8S-Kubernetes API server: PASSED.
+                        Checking K8S-etcd server client API: PASSED.
+                        Checking K8S-Kubelet API: PASSED.
+                        Checking K8S-Kubernetes Scheduler: PASSED.
+                        Checking K8S-Kubernetes Controller Manager: PASSED.
+                        Checking InfoSight Aggregator: PASSED.
+                        Checking EPIC VXLAN port: PASSED.
+                        Checking Web UI port: PASSED.
+                Total: 30  --  Failed: 0  --  Warning: 0  --  Forced(success): 0
 
 
+                Network configuration
+                        Checking primary IP address: PASSED.
+                                Using ens192:192.168.0.10 as primary interface
+                        Checking FQDN of the host: PASSED.
+                        Checking default gateway settings: PASSED.
+                        Checking Proxy setting: PASSED.
+                        Checking internet access: PASSED.
+                Total: 5  --  Failed: 0  --  Warning: 0  --  Forced(success): 0
 
 
+                Operating system configuration
+                        Checking OS type: PASSED.
+                        Checking OS Family: PASSED.
+                        Checking running kernel version: PASSED.
+                        Checking CONFIG_SECCOMP enabled in kernel: PASSED.
+                        Checking compatible DOCKER version for install: PASSED.
+                        Checking SELinux enforcement: PASSED.
+                        Checking IPtables/Firewalld configuration: PASSED.
+                        Checking automount configuration: PASSED.
+                        Checking SSHD configuration: PASSED.
+                        Checking rsyslog setting: PASSED.
+                        Checking user and group specified: PASSED.
+                        Checking dnsmasq user and group specified: PASSED.
+                        Checking for krb5.keytab: PASSED.
+                        Checking cgconfig kernel params: PASSED.
+                        Checking compatible python version: os-tests: Checking python version for os version centos 7
+                PASSED.
+                        Checking Checking for presence of erlang cookie: PASSED.
+                        Checking /tmp Mount Status: PASSED.
+                Total: 17  --  Failed: 0  --  Warning: 0  --  Forced(success): 0
 
+                Filesystem free space checks.
+                        Checking freespace on /: PASSED.
+                        Checking freespace on /srv: PASSED.
+                        Checking freespace on /var: PASSED.
+                        Checking freespace on /opt: PASSED.
+                        Checking configured swap size: PASSED.
+                        Checking docker storage: PASSED.
+                Total: 6  --  Failed: 0  --  Warning: 0  --  Forced(success): 0
+
+                ***************************************************************************
+                Aggregate tests summary:
+                            Total : 61
+                            Failed : 0
+                        Warning : 0
+                Forced(success) : 0
+                Additional information for debugging is written to /tmp/bd_prechecks.10358.log
+                ***************************************************************************
+
+8) If the step 7 dont show any failure you can install the Ezmeral with the follow command:
+
+    # ./hpe-cp-rhel-release-5.4.1-3073.bin --default-password Ezmeral@123 --controller-public-if=ens192 --skipeula
+
+    The result is similar at the follow:
+            
+            BlueData Controller services are up.
+            BlueData Controller API is up.
+            [2022-11-11:11-15-20] Executing component scripts for PURPOSE worker, STEP start
+            [2022-11-11:11-15-20] Executing: WORKER START 00_misc.sh
+            [2022-11-11:11-15-26] Executing: WORKER START 04_worker.sh
+            (Re)starting BlueData Worker services
+            Waiting for BlueData Worker services to be up.
+            BlueData Worker services are up.
+            [2022-11-11:11-15-44] Executing: WORKER START 09_ovs.sh
+            [2022-11-11:11-15-46] Executing: WORKER START 10_docker.sh
+            [2022-11-11:11-15-48] Executing: WORKER START 15_infosight.sh
+            [2022-11-11:11-15-51] Executing: WORKER START 90_bdmgmt.sh
+            [2022-11-11:11-15-53] Executing: WORKER START 95_chrony.sh
+
+
+            Successfully installed HPE CP.
+            Please visit http://192.168.0.10/ to configure the server.
+
+9) The next step you will execute at Web Browser with the Ezmeral URL showing at end of setup, in this case http://192.168.0.10
+
+10) At Web Insterface keep all informations by default and click at submit button;
+
+11) At end of installation you can login with default username and password that you use during setup command.
+
+    This case the default username and password is admin / Ezmeral@123
+
+12) 
