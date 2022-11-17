@@ -6,6 +6,10 @@ This Lab is create to demonstrate the basic for HPE Ezmeral Runtime
 Ezmeral Version: 5.4
 Created by: Marcio Paladini (paladini@hpe.com)
 Guide Version: 20231111v1
+
+Youtube Playlist with all steps --> https://youtube.com/playlist?list=PL4Q9z2ATmTaEJzBe2vvdJ1sLm2bguD3J4 
+
+
 ====================================================================
 
 Step-by-Step Setup
