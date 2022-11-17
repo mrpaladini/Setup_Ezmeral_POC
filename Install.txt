@@ -250,4 +250,152 @@ This linux will be used to create a VM Template for all others servers.
 
     This case the default username and password is admin / Ezmeral@123
 
-12) 
+12) Now you need to create a new VM from Template to use as gateway
+
+    a) Create a new vm from Template VM;
+    b) Change hostname IP and parameters;
+
+            In this case 
+            hostname = gateway.lab.local
+            IP       = 192.168.0.11
+
+            # hostnamectl set-hostname gateway.lab.local
+            # sed -i 's/IPADDR=192.168.0.1/IPADDR=192.168.0.11/g' /etc/sysconfig/network-scripts/ifcfg-ens192
+            # echo "umask 0022" >> /etc/profile
+            # echo "nameserver 192.168.0.254" >> /etc/resolv.conf
+            # sed -i 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/selinux/config
+            # reboot
+
+            Note: you can use plink as showing at step 5.
+
+            Gateway
+
+            echo "" | plink  root@192.168.0.1 -pw Ezmeral@123 ("hostnamectl set-hostname gateway.lab.local")
+            echo "" | plink  root@192.168.0.1 -pw Ezmeral@123 ("sed -i 's/IPADDR=192.168.0.1/IPADDR=192.168.0.11/g' /etc/sysconfig/network-scripts/ifcfg-ens192")
+            echo "" | plink  root@192.168.0.1 -pw Ezmeral@123 ("echo "umask 0022" >> /etc/profile")
+            echo "" | plink  root@192.168.0.1 -pw Ezmeral@123 ("echo "nameserver 192.168.0.254" >> /etc/resolv.conf")
+            echo "" | plink  root@192.168.0.1 -pw Ezmeral@123 ("sed -i 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/selinux/config")
+            echo "" | plink  root@192.168.0.1 -pw Ezmeral@123 ("reboot")
+
+    c) Create SSL keys at copy to controller VM the Certificate
+
+            cd /root
+            mkdir .ssh
+            ssh-keygen -b 2048 -t rsa -f /root/.ssh/id_rsa -q -N ""
+            cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys 
+
+            **** The follow command you need to execute in all servers to enable auto login by controller, remember to check the IP of your controller if you dont use the LAB sample network.
+            cat .ssh/id_rsa.pub | ssh -oStrictHostKeyChecking=no  root@192.168.0.10 'cat >> .ssh/authorized_keys'
+
+
+13) Add Gateway using Ezmeral Web interface
+
+    a) Login at Ezmeral Portal by http://192.168.0.10/bdswebui/login/
+    b) Enter Site Lockdown mode;
+    c) Clique at Gateway LB at left menu;
+    d) Enter with follow information:
+
+        IP          = 192.168.0.11  ( If you change the sugested network enter with your gateway IP)
+        Hostname    = gateway.lab.local ( If you change the sugested hostname and domain enter with your gateway information)
+        Username =  root
+        Password =  (your gateway linux password)
+
+ 14) Create more 2 VM´s or more to use as Kubernetes nodes, the basic is 2 VMS one for master and other for worker.
+
+    a) k8s1
+        IP          = 192.168.0.14  ( If you change the sugested network enter with your gateway IP)
+        Hostname    = k8s1.lab.local ( If you change the sugested hostname and domain enter with your gateway information)
+        Username =  root
+        Password =  (your gateway linux password)
+        
+        Script option
+
+        echo "" | plink  root@192.168.0.1 -pw Ezmeral@123 ("hostnamectl set-hostname k8s1.lab.local")
+        echo "" | plink  root@192.168.0.1 -pw Ezmeral@123 ("sed -i 's/IPADDR=192.168.0.1/IPADDR=192.168.0.14/g' /etc/sysconfig/network-scripts/ifcfg-ens192")
+        echo "" | plink  root@192.168.0.1 -pw Ezmeral@123 ("echo "umask 0022" >> /etc/profile")
+        echo "" | plink  root@192.168.0.1 -pw Ezmeral@123 ("echo "nameserver 192.168.0.254" >> /etc/resolv.conf")
+        echo "" | plink  root@192.168.0.1 -pw Ezmeral@123 ("sed -i 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/selinux/config")
+        echo "" | plink  root@192.168.0.1 -pw Ezmeral@123 ("reboot")
+
+        cd /root
+        mkdir .ssh
+        ssh-keygen -b 2048 -t rsa -f /root/.ssh/id_rsa -q -N ""
+        cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys 
+
+        **** The follow command you need to execute in all servers to enable auto login by controller, remember to check the IP of your controller if you dont use the LAB sample network.
+        cat .ssh/id_rsa.pub | ssh -oStrictHostKeyChecking=no  root@192.168.0.10 'cat >> .ssh/authorized_keys'
+    
+    b) k8s2
+
+        IP          = 192.168.0.15  ( If you change the sugested network enter with your gateway IP)
+        Hostname    = k8s2.lab.local ( If you change the sugested hostname and domain enter with your gateway information)
+        Username =  root
+        Password =  (your gateway linux password)
+
+        Script option
+
+        echo "" | plink  root@192.168.0.1 -pw Ezmeral@123 ("hostnamectl set-hostname k8s2.lab.local")
+        echo "" | plink  root@192.168.0.1 -pw Ezmeral@123 ("sed -i 's/IPADDR=192.168.0.1/IPADDR=192.168.0.15/g' /etc/sysconfig/network-scripts/ifcfg-ens192")
+        echo "" | plink  root@192.168.0.1 -pw Ezmeral@123 ("echo "umask 0022" >> /etc/profile")
+        echo "" | plink  root@192.168.0.1 -pw Ezmeral@123 ("echo "nameserver 192.168.0.254" >> /etc/resolv.conf")
+        echo "" | plink  root@192.168.0.1 -pw Ezmeral@123 ("sed -i 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/selinux/config")
+        echo "" | plink  root@192.168.0.1 -pw Ezmeral@123 ("reboot")
+
+        cd /root
+        mkdir .ssh
+        ssh-keygen -b 2048 -t rsa -f /root/.ssh/id_rsa -q -N ""
+        cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys 
+
+        **** The follow command you need to execute in all servers to enable auto login by controller, remember to check the IP of your controller if you dont use the LAB sample network.
+        cat .ssh/id_rsa.pub | ssh -oStrictHostKeyChecking=no  root@192.168.0.10 'cat >> .ssh/authorized_keys'
+
+15) Add Kubernetes (K8S) nodes using Web Interface
+
+    a) At left menu click on Kubernetes
+    b) click in Hosts
+    c) Enter with IP, username and password for K8s nodes
+    d) Click on button Submit
+
+    Waiting for status change from "Running bundle" to "Phase 1 of 2 completed" at hosts lines
+
+    e) Select both hosts and click in Install button
+
+    Waiting for status change for ready
+
+16) Create Kubernetes Cluster
+
+    a) at left menu click at Kubernetes
+    b) Click in Clusters
+    c) At right side click in Create Kubernetes Cluster
+
+        - Enter with Name
+        - Enter with Description
+        - Select Node for Master and Worker
+        - Keep all other informations default 
+        - Waiting for ready state
+
+17) Create Tenant Demo
+
+    a) at left menu click at Kubernetes
+    b) Click in Tenants
+    c) Click in Create button
+    d) Enter with Tenant name and description
+    e) Keep all options to default
+    f) Click Submit
+
+18 Launch Firt Container demo with Kubedirector
+
+    Note: Before execute this steps remember to exit Lockdown Mode at admim menu in left side at top of screen.
+
+    a) at left menu click at Kubernetes
+    b) at left menu click at Applications
+    c) Click in CentOS 7.9 icon and button Launch
+    d) Enter with app name and description
+    e) Click at Submit button
+
+
+
+
+
+
+
